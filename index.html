@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CRCE Finance Club — Mock Trading Terminal</title>
+<meta name="description" content="A real-time mock trading dashboard built to demonstrate high-frequency WebSocket UI rendering patterns." />
+
+<!-- Google Fonts: Sora (display), Inter (body), JetBrains Mono (numeric/ticker data) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===================== ANIMATED BACKGROUND GRID ===================== -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <!-- ===================== TOP NAVBAR ===================== -->
+  <header class="navbar">
+    <div class="navbar__left">
+      <button class="icon-btn nav-toggle" id="navToggle" aria-label="Toggle sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="brand">
+        <div class="brand__mark">CR</div>
+        <div class="brand__text">
+          <span class="brand__name">CRCE Finance Club</span>
+          <span class="brand__tag">Mock Trading Terminal</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="navbar__nav" aria-label="Primary">
+      <a href="#" class="navlink navlink--active">Dashboard</a>
+      <a href="#" class="navlink">Portfolio</a>
+      <a href="#" class="navlink">Markets</a>
+      <a href="#" class="navlink">Orders</a>
+    </nav>
+
+    <div class="navbar__right">
+      <div class="search-box">
+        <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="text" id="stockSearch" placeholder="Search symbol or company…" autocomplete="off" />
+      </div>
+
+      <div class="market-badge" id="marketBadge">
+        <span class="market-badge__dot"></span>
+        <span id="marketBadgeText">Market Open</span>
+      </div>
+
+      <div class="live-clock" id="liveClock">--:--:--</div>
+
+      <div class="avatar" title="Demo Trader">DT</div>
+    </div>
+  </header>
+
+  <!-- ===================== SCROLLING TICKER TAPE (SIGNATURE ELEMENT) ===================== -->
+  <div class="ticker-tape" aria-hidden="true">
+    <div class="ticker-tape__track" id="tickerTrack"><!-- populated + duplicated by JS for seamless loop --></div>
+  </div>
+
+  <!-- ===================== APP SHELL ===================== -->
+  <div class="app-shell">
+
+    <!-- ===================== LEFT SIDEBAR ===================== -->
+    <aside class="sidebar" id="sidebar">
+      <button class="side-icon side-icon--active" title="Dashboard">
+        <svg width="20" height="20" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>
+      <button class="side-icon" title="Watchlist">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 12s3.5-7 9-7 9 7 9 7-3.5 7-9 7-9-7-9-7z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>
+      <button class="side-icon" title="Orders">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M9 4h6l1 3H8l1-3z" stroke="currentColor" stroke-width="1.8"/><rect x="5" y="7" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button class="side-icon" title="Portfolio">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 9l9-6 9 6v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>
+      <button class="side-icon" title="Charts">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M4 19V9M11 19V4M18 19v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="sidebar__spacer"></div>
+      <button class="side-icon" title="Settings">
+        <svg width="20" height="20" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a7.97 7.97 0 0 0 0-2l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L15 3h-6l-.3 2.6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4L4.6 11a7.97 7.97 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1L9 21h6l.3-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5z" stroke="currentColor" stroke-width="1.4"/></svg>
+      </button>
+    </aside>
+
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <main class="main">
+
+      <!-- ---- Portfolio Summary ---- -->
+      <section class="panel-row" aria-label="Portfolio summary">
+        <div class="card stat-card">
+          <span class="stat-card__label">Portfolio Value</span>
+          <span class="stat-card__value" id="statPortfolioValue">₹0</span>
+          <span class="stat-card__sub" id="statPortfolioInvested">Invested ₹0</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-card__label">Today's P&amp;L</span>
+          <span class="stat-card__value" id="statDayPnl">₹0</span>
+          <span class="stat-card__sub" id="statDayPnlPct">0.00%</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-card__label">Total P&amp;L</span>
+          <span class="stat-card__value" id="statTotalPnl">₹0</span>
+          <span class="stat-card__sub" id="statTotalPnlPct">0.00%</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-card__label">Open Positions</span>
+          <span class="stat-card__value" id="statPositions">0</span>
+          <span class="stat-card__sub">Across NSE equity</span>
+        </div>
+      </section>
+
+      <!-- ---- Market Indices ---- -->
+      <section class="panel-row panel-row--indices" id="indicesRow" aria-label="Market indices">
+        <!-- index cards injected by JS -->
+      </section>
+
+      <!-- ---- Featured Chart ---- -->
+      <section class="card chart-panel" aria-label="Featured stock chart">
+        <div class="chart-panel__head">
+          <div class="chart-panel__title">
+            <span class="chart-panel__symbol" id="chartSymbol">RELIANCE</span>
+            <span class="chart-panel__name" id="chartName">Reliance Industries Ltd.</span>
+          </div>
+          <div class="chart-panel__price">
+            <span class="chart-panel__last" id="chartLast">₹0.00</span>
+            <span class="chart-panel__delta" id="chartDelta">+0.00 (0.00%)</span>
+          </div>
+        </div>
+        <div class="chart-panel__canvas-wrap">
+          <svg id="chartSvg" class="chart-svg" viewBox="0 0 1000 280" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="chartFillGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--accent-cyan)" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="var(--accent-cyan)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path id="chartGrid" class="chart-svg__grid"></path>
+            <path id="chartArea" class="chart-svg__area" fill="url(#chartFillGradient)"></path>
+            <path id="chartLine" class="chart-svg__line" fill="none"></path>
+            <circle id="chartDot" class="chart-svg__dot" r="4"></circle>
+          </svg>
+        </div>
+      </section>
+
+      <!-- ---- Top Gainers / Losers ---- -->
+      <section class="panel-row panel-row--movers">
+        <div class="card movers-card">
+          <div class="movers-card__head">
+            <h3>Top Gainers</h3>
+            <span class="movers-card__icon movers-card__icon--up">▲</span>
+          </div>
+          <ul class="movers-list" id="topGainers"></ul>
+        </div>
+        <div class="card movers-card">
+          <div class="movers-card__head">
+            <h3>Top Losers</h3>
+            <span class="movers-card__icon movers-card__icon--down">▼</span>
+          </div>
+          <ul class="movers-list" id="topLosers"></ul>
+        </div>
+      </section>
+
+      <!-- ---- Full Stock Grid ---- -->
+      <section class="stock-grid-section">
+        <div class="stock-grid-section__head">
+          <h3>All Stocks <span class="muted">(50 · NSE mock feed)</span></h3>
+          <div class="legend">
+            <span class="legend__dot legend__dot--up"></span> Up
+            <span class="legend__dot legend__dot--down"></span> Down
+          </div>
+        </div>
+        <div class="stock-grid" id="stockGrid"><!-- 50 stock cards injected by JS --></div>
+      </section>
+
+    </main>
+
+    <!-- ===================== RIGHT WATCHLIST ===================== -->
+    <aside class="watchlist" id="watchlist">
+      <div class="watchlist__head">
+        <h3>Watchlist</h3>
+        <span class="watchlist__count" id="watchlistCount">0</span>
+      </div>
+      <div class="watchlist__list" id="watchlistList"><!-- injected by JS --></div>
+    </aside>
+
+  </div>
+
+  <!-- ===================== FLOATING NOTIFICATIONS ===================== -->
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
